@@ -1,477 +1,312 @@
-import React, { useState, useEffect, useMemo } from 'react';
-
-const Culturist = ({ 
-  initialState = '', 
-  initialCity = '', 
-  initialSeason = '', 
-  cityData = null,
-  onBack 
-}) => {
-  // const [selectedState, setSelectedState] = useState('');
-  // const [selectedCity, setSelectedCity] = useState('');
-  // const [selectedSeason, setSelectedSeason] = useState('');
-  const [likes, setLikes] = useState({});
-  const [comments, setComments] = useState([]);
-  const [newComment, setNewComment] = useState('');
-
-  const [selectedState, setSelectedState] = useState(initialState);
-  const [selectedCity, setSelectedCity] = useState(initialCity);
-  const [selectedSeason, setSelectedSeason] = useState(initialSeason);
-
-  // Load data from localStorage on component mount
-  useEffect(() => {
-    const savedLikes = JSON.parse(localStorage.getItem('culturist-likes') || '{}');
-    const savedComments = JSON.parse(localStorage.getItem('culturist-comments') || '[]');
-    setLikes(savedLikes);
-    setComments(savedComments);
-  }, []);
-
-  // Save to localStorage whenever likes or comments change
-  useEffect(() => {
-    localStorage.setItem('culturist-likes', JSON.stringify(likes));
-  }, [likes]);
-
-  useEffect(() => {
-    localStorage.setItem('culturist-comments', JSON.stringify(comments));
-  }, [comments]);
-
-  // Static data for Indian states, cities, and seasonal information
-  const travelData = {
+import React from 'react';
+  // Popular cities data with images
+  const popularCities = {
+    Delhi: {
+      cities: {
+        "Delhi": {
+          Winter: {
+            festivals: ["Diwali"],
+            food: ["Petha", "Chaat"],
+            monuments: ["India Gate", "Taj Mahal", "Agra Fort"],
+            lifestyle: "Bustling capital with historical charm. Mix of politics, heritage, and vibrant street life.",
+            description: "Winter is ideal for sightseeing in Delhi with crisp weather and festive spirit."
+          }
+        }
+      },
+      image: "https://images.unsplash.com/photo-1587474260584-136574528ed5?w=800&q=80",
+      bestTime: "October to March",
+      highlight: "Historical monuments and rich Mughal heritage"
+    },
     Maharashtra: {
       cities: {
-        Mumbai: {
+        "Mumbai": {
           Winter: {
-            festivals: ['Ganesh Chaturthi', 'Navratri', 'Christmas Celebrations'],
-            food: ['Vada Pav', 'Pav Bhaji', 'Bhel Puri', 'Misal Pav'],
-            monuments: ['Marine Drive', 'Gateway of India', 'Chhatrapati Shivaji Terminus', 'Elephanta Caves'],
-            lifestyle: 'Fast-paced urban culture with friendly locals. The city never sleeps, offering vibrant nightlife and bustling markets.',
-            description: 'Winter is the perfect time to explore Mumbai with pleasant weather and clear skies.'
-          },
-          Monsoon: {
-            festivals: ['Teej', 'Gokulashtami'],
-            food: ['Hot Bhajias', 'Masala Chai', 'Corn Bhel'],
-            monuments: ['Hanging Gardens', 'Juhu Beach', 'Sanjay Gandhi National Park'],
-            lifestyle: 'Monsoon brings a romantic charm to the city. People enjoy street food and the lush greenery.',
-            description: 'Experience Mumbai during monsoons with dramatic weather and refreshing rains.'
-          }
-        },
-        Pune: {
-          Winter: {
-            festivals: ['Pune Festival', 'Ganesh Chaturthi', 'Diwali'],
-            food: ['Puran Poli', 'Misal Pav', 'Mastani', 'Bhakarwadi'],
-            monuments: ['Shaniwar Wada', 'Aga Khan Palace', 'Sinhagad Fort'],
-            lifestyle: 'Cultural hub with a blend of tradition and modernity. Known for its educational institutions and pleasant weather.',
-            description: 'Winter offers perfect weather for exploring Pune\'s historical sites and cultural attractions.'
-          },
-          Summer: {
-            festivals: ['Gudi Padwa', 'Ram Navami'],
-            food: ['Kulfi', 'Lassi', 'Watermelon Juice'],
-            monuments: ['Parvati Hill', 'Pune University', 'Koregaon Park'],
-            lifestyle: 'Summer brings outdoor cafes and evening gatherings. People prefer air-conditioned malls and gardens.',
-            description: 'Though warm, summer in Pune offers vibrant outdoor activities in the evenings.'
-          }
-        },
-        Aurangabad: {
-          Winter: {
-            festivals: ['Ellora-Ajanta Festival', 'Diwali', 'Makar Sankranti'],
-            food: ['Naan Khaliya', 'Tahri', 'Sheermal', 'Mutton Biryani'],
-            monuments: ['Ajanta Caves', 'Ellora Caves', 'Bibi Ka Maqbara', 'Daulatabad Fort'],
-            lifestyle: 'Rich historical heritage with warm hospitality. Known for its architectural marvels and Mughal influence.',
-            description: 'Winter is ideal for exploring the UNESCO World Heritage sites with comfortable weather.'
+            festivals: ["Ganesh Chaturthi"],
+            food: ["Vada Pav", "Pav Bhaji"],
+            monuments: ["Gateway of India", "Elephanta Caves", "Colaba Causeway"],
+            lifestyle: "Festive and lively coastal city with a blend of colonial architecture and modern buzz.",
+            description: "Winter offers a pleasant break to explore Mumbai's coastal charm and bustling life."
           }
         }
-      }
-    },
-    Rajasthan: {
-      cities: {
-        Jaipur: {
-          Winter: {
-            festivals: ['Desert Festival', 'Diwali', 'Teej', 'Makar Sankranti'],
-            food: ['Dal Baati Churma', 'Ghewar', 'Laal Maas', 'Kachori'],
-            monuments: ['Hawa Mahal', 'City Palace', 'Amber Fort', 'Jantar Mantar'],
-            lifestyle: 'Royal heritage with vibrant colors everywhere. Known for handicrafts, jewelry, and warm hospitality.',
-            description: 'Winter is the best time to explore the Pink City with pleasant days and cool nights.'
-          },
-          Summer: {
-            festivals: ['Gangaur', 'Akshaya Tritiya'],
-            food: ['Kulfi', 'Lassi', 'Sattu Drink'],
-            monuments: ['Nahargarh Fort', 'Jaigarh Fort', 'Albert Hall Museum'],
-            lifestyle: 'Summer brings early morning and late evening activities. People prefer shaded markets and indoor attractions.',
-            description: 'Though hot, summer offers fewer crowds and better deals on accommodations.'
-          }
-        },
-        Udaipur: {
-          Winter: {
-            festivals: ['Mewar Festival', 'Diwali', 'World Music Festival'],
-            food: ['Dal Baati Churma', 'Gatte ki Sabzi', 'Ker Sangri', 'Malpua'],
-            monuments: ['City Palace', 'Lake Pichola', 'Jag Mandir', 'Saheliyon Ki Bari'],
-            lifestyle: 'Romantic city with beautiful lakes and palaces. Known for its artistic heritage and peaceful ambiance.',
-            description: 'Winter transforms Udaipur into a fairy tale with perfect weather for boat rides and palace visits.'
-          },
-          Monsoon: {
-            festivals: ['Teej', 'Raksha Bandhan'],
-            food: ['Hot Pakoras', 'Masala Chai', 'Corn'],
-            monuments: ['Monsoon Palace', 'Fateh Prakash Palace', 'Bagore Ki Haveli'],
-            lifestyle: 'Monsoon brings lush greenery and romantic weather. Perfect for couples and nature lovers.',
-            description: 'Experience the Venice of the East during monsoons with overflowing lakes and green landscapes.'
-          }
-        },
-        Jodhpur: {
-          Winter: {
-            festivals: ['Rajasthan International Folk Festival', 'Diwali', 'Makar Sankranti'],
-            food: ['Mirchi Bada', 'Pyaaz Kachori', 'Mawa Kachori', 'Rabri'],
-            monuments: ['Mehrangarh Fort', 'Umaid Bhawan Palace', 'Jaswant Thada', 'Clock Tower'],
-            lifestyle: 'Blue City charm with narrow alleys and traditional crafts. Known for its fort and desert culture.',
-            description: 'Winter offers perfect weather to explore the magnificent Blue City and its architectural wonders.'
-          }
-        }
-      }
+      },
+      image: "https://images.unsplash.com/photo-1595658658481-d53d3f999875?w=800&q=80",
+      bestTime: "November to February",
+      highlight: "Bollywood capital and financial hub with colonial architecture"
     },
     Kerala: {
       cities: {
-        Kochi: {
+        "Alleppey": {
           Winter: {
-            festivals: ['Cochin Carnival', 'Christmas', 'New Year Celebrations'],
-            food: ['Appam with Stew', 'Fish Curry', 'Puttu', 'Banana Chips'],
-            monuments: ['Chinese Fishing Nets', 'Mattancherry Palace', 'St. Francis Church', 'Jewish Synagogue'],
-            lifestyle: 'Coastal culture with Portuguese, Dutch, and British influences. Known for spice trade and backwaters.',
-            description: 'Winter is perfect for exploring Kochi\'s colonial heritage and enjoying the pleasant sea breeze.'
-          },
-          Monsoon: {
-            festivals: ['Onam', 'Boat Race Festival'],
-            food: ['Karimeen Fish', 'Coconut Water', 'Hot Payasam'],
-            monuments: ['Backwaters', 'Fort Kochi Beach', 'Marine Drive'],
-            lifestyle: 'Monsoon brings Ayurvedic treatments and peaceful backwater experiences. Perfect for rejuvenation.',
-            description: 'Experience Kerala\'s monsoon magic with Ayurvedic spas and serene backwater cruises.'
-          }
-        },
-        Munnar: {
-          Winter: {
-            festivals: ['Neelakurinji Festival', 'Christmas', 'Pongal'],
-            food: ['Puttu', 'Kadala Curry', 'Fresh Tea', 'Banana Fritters'],
-            monuments: ['Tea Gardens', 'Eravikulam National Park', 'Mattupetty Dam', 'Echo Point'],
-            lifestyle: 'Hill station tranquility with tea plantation culture. Perfect for nature lovers and peace seekers.',
-            description: 'Winter offers crisp mountain air and clear views of the tea-covered hills.'
-          },
-          Summer: {
-            festivals: ['Easter', 'Vishu'],
-            food: ['Fresh Fruits', 'Cold Tea', 'Ice Cream'],
-            monuments: ['Top Station', 'Kundala Lake', 'Rose Garden'],
-            lifestyle: 'Summer brings cool mountain weather perfect for escaping the heat. Ideal for trekking and nature walks.',
-            description: 'Summer in Munnar is pleasantly cool, making it a perfect hill station retreat.'
-          }
-        },
-        Alleppey: {
-          Monsoon: {
-            festivals: ['Nehru Trophy Boat Race', 'Onam', 'Krishna Jayanti'],
-            food: ['Fish Curry', 'Appam', 'Coconut Rice', 'Banana Leaf Meals'],
-            monuments: ['Backwaters', 'Alleppey Beach', 'Krishnapuram Palace', 'Pathiramanal Island'],
-            lifestyle: 'Venice of the East with houseboat culture. Monsoon brings lush paddy fields and romantic boat rides.',
-            description: 'Monsoon is the soul of Alleppey with verdant backwaters and traditional boat races.'
-          },
-          Winter: {
-            festivals: ['Christmas', 'Beach Festival'],
-            food: ['Seafood Platter', 'Coconut Water', 'Prawn Curry'],
-            monuments: ['Houseboat Experience', 'Vembanad Lake', 'Alappuzha Lighthouse'],
-            lifestyle: 'Perfect houseboat weather with calm backwaters. Ideal for honeymooners and families.',
-            description: 'Winter offers calm backwaters and perfect weather for houseboat experiences.'
+            festivals: ["Onam"],
+            food: ["Sadya", "Seafood"],
+            monuments: ["Alleppey Houseboats", "Fort Kochi"],
+            lifestyle: "Relaxed and hospitable with serene backwaters and strong cultural roots.",
+            description: "Winter is perfect to enjoy Kerala's tranquil backwaters and coastal cuisine."
           }
         }
-      }
+      },
+      image: "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=800&q=80",
+      bestTime: "October to March",
+      highlight: "God's Own Country with pristine backwaters and houseboats"
+    },
+    Karnataka: {
+      cities: {
+        "Hampi": {
+          Winter: {
+            festivals: ["Hampi Utsav"],
+            food: ["Bisi Bele Bath", "Mysore Pak"],
+            monuments: ["Virupaksha Temple", "Royal Enclosure"],
+            lifestyle: "Ancient ruins and vibrant markets in a heritage-rich setting.",
+            description: "Winter brings cool temperatures to comfortably explore Hampi's ancient ruins."
+          }
+        }
+      },
+      image: "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?w=800&q=80",
+      bestTime: "October to February",
+      highlight: "UNESCO World Heritage site with ancient Vijayanagara ruins"
+    },
+    Goa: {
+      cities: {
+        "Goa": {
+          Winter: {
+            festivals: ["Carnival", "Shigmo", "Christmas"],
+            food: ["Fish Curry Rice", "Vindaloo", "Bebinca"],
+            monuments: ["Basilica of Bom Jesus", "Se Cathedral", "Fort Aguada"],
+            lifestyle: "Laid-back, friendly, and culturally diverse with a mix of beach and heritage life.",
+            description: "Winter is peak season in Goa, perfect for beach hopping and festive celebrations."
+          },
+          Monsoon: {
+            festivals: [],
+            food: ["Fish Curry Rice", "Hot Feni", "Prawn Balchão"],
+            monuments: ["Dudhsagar Falls", "Spice Plantations"],
+            lifestyle: "Lush, romantic and quiet. Ideal for monsoon lovers and wellness retreats.",
+            description: "Goa's monsoon season is magical with green hills and dramatic skies."
+          }
+        }
+      },
+      image: "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=800&q=80",
+      bestTime: "November to February",
+      highlight: "Beach paradise with Portuguese heritage and vibrant nightlife"
+    },
+    Gujarat: {
+      cities: {
+        "Rann of Kutch": {
+          Winter: {
+            festivals: ["Rann Utsav"],
+            food: ["Dabeli", "Fafda"],
+            monuments: ["Kalo Dungar", "Dholavira"],
+            lifestyle: "Desert culture with colorful traditions and artisan crafts.",
+            description: "Winter is the best time to witness the vibrant Rann Utsav under full moons."
+          }
+        }
+      },
+      image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&q=80",
+      bestTime: "November to February",
+      highlight: "White salt desert with cultural festival and full moon nights"
+    },
+    "Madhya Pradesh": {
+      cities: {
+        "Khajuraho": {
+          Winter: {
+            festivals: ["Khajuraho Dance Festival"],
+            food: ["Poha", "Chaat"],
+            monuments: ["Western Group of Temples", "Light and Sound Show"],
+            lifestyle: "Ancient and artistic vibe with classical art and sculpture all around.",
+            description: "Winter is ideal to enjoy temple art and attend the dance festival in Khajuraho."
+          }
+        }
+      },
+      image: "https://images.unsplash.com/photo-1609920658906-8223bd289001?w=800&q=80",
+      bestTime: "October to March",
+      highlight: "UNESCO site famous for intricate temple sculptures and art"
+    },
+    "West Bengal": {
+      cities: {
+        "Sundarbans": {
+          Winter: {
+            festivals: ["Durga Puja"],
+            food: ["Fish Curry"],
+            monuments: ["Sundarbans National Park"],
+            lifestyle: "Wild and natural with a strong connection to rivers and forests.",
+            description: "Explore the world's largest mangrove forest during winter with ease and safety."
+          }
+        }
+      },
+      image: "https://images.unsplash.com/photo-1571115764595-644a1f56a55c?w=800&q=80",
+      bestTime: "November to February",
+      highlight: "World's largest mangrove forest and Royal Bengal Tiger habitat"
+    },
+    "Tamil Nadu": {
+      cities: {
+        "Madurai": {
+          Winter: {
+            festivals: ["Chithirai Festival"],
+            food: ["Dosa", "Idli"],
+            monuments: ["Meenakshi Temple", "Thirumalai Nayak Palace", "Pondy Marina"],
+            lifestyle: "Deeply spiritual and cultural city with ancient temples and traditions.",
+            description: "Winter brings cooler weather to explore the spiritual heart of Tamil Nadu."
+          }
+        }
+      },
+      image: "https://images.unsplash.com/photo-1582555172866-f73bb12a2ab3?w=800&q=80",
+      bestTime: "October to March",
+      highlight: "Temple city with magnificent Dravidian architecture"
+    },
+    "Jammu & Kashmir": {
+      cities: {
+        "Srinagar": {
+          Winter: {
+            festivals: ["Lohri"],
+            food: ["Kashmiri Wazwan"],
+            monuments: ["Dal Lake", "Gulmarg"],
+            lifestyle: "Peaceful and scenic snowy landscapes with a blend of spirituality and adventure.",
+            description: "Winter in Kashmir offers snow adventures and serene houseboat experiences."
+          }
+        }
+      },
+      image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80",
+      bestTime: "March to October",
+      highlight: "Paradise on Earth with Dal Lake and stunning mountain views"
+    },
+    "Uttar Pradesh": {
+      cities: {
+        "Varanasi": {
+          Winter: {
+            festivals: ["Dev Deepawali", "Ganga Mahotsav", "Mahashivratri"],
+            food: ["Kachori Sabzi", "Tamatar Chaat", "Malaiyyo"],
+            monuments: ["Dashashwamedh Ghat", "Kashi Vishwanath Temple", "Sarnath"],
+            lifestyle: "Spiritual, timeless, and deeply rooted in tradition. The Ganges shapes daily life.",
+            description: "Winter is perfect to explore the ghats and witness spiritual rituals comfortably."
+          }
+        }
+      },
+      image: "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?w=800&q=80",
+      bestTime: "October to March",
+      highlight: "Spiritual capital of India with ancient ghats along Ganges"
+    },
+    Ladakh: {
+      cities: {
+        "Leh": {
+          Summer: {
+            festivals: ["Ladakh Festival"],
+            food: ["Thukpa", "Momo"],
+            monuments: ["Pangong Lake", "Thiksey Monastery"],
+            lifestyle: "Adventure-filled high-altitude land with monasteries and surreal landscapes.",
+            description: "Summer is ideal for travel in Ladakh when roads are open and weather is calm."
+          }
+        }
+      },
+      image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80",
+      bestTime: "May to September",
+      highlight: "High-altitude desert with Buddhist monasteries and pristine lakes"
     }
   };
 
-  const seasons = ['Winter', 'Summer', 'Monsoon'];
+const LandingPage = ({ onExplorePlace, onExploreAllStates }) => {
 
-  // Get cities for selected state
-  const availableCities = useMemo(() => {
-    if (!selectedState || !travelData[selectedState]) return [];
-    return Object.keys(travelData[selectedState].cities);
-  }, [selectedState]);
-
-  // Get current destination data
-// In the Culturist component, modify the currentData calculation:
-const currentData = useMemo(() => {
-  // First check if we have pre-loaded city data
-  if (cityData) return cityData;
-  
-  // Then check if we have all required selections
-  if (!selectedState || !selectedCity || !selectedSeason) return null;
-  
-  // Finally try to get data from travelData
-  return travelData[selectedState]?.cities?.[selectedCity]?.[selectedSeason] || null;
-}, [selectedState, selectedCity, selectedSeason, cityData]);
-
-  // Handle like button click
-  const handleLike = (cardType) => {
-    const key = `${selectedState}-${selectedCity}-${selectedSeason}-${cardType}`;
-    setLikes(prev => ({
-      ...prev,
-      [key]: (prev[key] || 0) + 1
-    }));
-  };
-
-  // Handle comment submission
-  const handleCommentSubmit = () => {
-    if (newComment.trim()) {
-      const comment = {
-        id: Date.now(),
-        text: newComment.trim(),
-        destination: `${selectedCity}, ${selectedState}`,
-        season: selectedSeason,
-        timestamp: new Date().toLocaleString()
-      };
-      setComments(prev => [comment, ...prev]);
-      setNewComment('');
-    }
-  };
-
-  // Reset selections when state changes
-  const handleStateChange = (state) => {
-    setSelectedState(state);
-    setSelectedCity('');
-    setSelectedSeason('');
-  };
-
-  const handleCityChange = (city) => {
-    setSelectedCity(city);
-    setSelectedSeason('');
-  };
 
   return (
-    <div className="container">
-      <header className="header">
-        <button onClick={onBack} className="back-to-home">
-          ← Back to Home
-        </button>
-        <h1 className="title">
-          🌏 Culturist
-        </h1>
-        <p className="subtitle">Explore India Seasonally - Discover the perfect time to visit Indian cities</p>
-      </header>
-
-      {/* Filter Section */}
-      <div className="filter-section">
-        <div className="filter-step">
-          <h3 className="step-title">1. Select State</h3>
-          <div className="button-grid">
-            {Object.keys(travelData).map(state => (
-              <button
-                key={state}
-                className={`filter-button ${selectedState === state ? 'selected' : ''}`}
-                onClick={() => handleStateChange(state)}
-              >
-                {state}
-              </button>
-            ))}
-          </div>
+    <div className="landing-page">
+      {/* Hero Section */}
+      <div className="hero-section">
+        <div className="hero-content">
+          <h1 className="hero-title">🌏 Discover India's Cultural Treasures</h1>
+          <p className="hero-subtitle">
+            Explore the perfect destinations for every season. From snow-capped mountains to golden beaches,
+            discover India's rich heritage, vibrant festivals, and authentic experiences.
+          </p>
+          <button 
+            className="explore-all-button"
+            onClick={onExploreAllStates}
+          >
+            <span>🗺️ Explore All States</span>
+            <span className="button-arrow">→</span>
+          </button>
         </div>
-
-        {selectedState && (
-          <div className="filter-step">
-            <h3 className="step-title">2. Select City</h3>
-            <div className="button-grid">
-              {availableCities.map(city => (
-                <button
-                  key={city}
-                  className={`filter-button ${selectedCity === city ? 'selected' : ''}`}
-                  onClick={() => handleCityChange(city)}
-                >
-                  {city}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {selectedCity && (
-          <div className="filter-step">
-            <h3 className="step-title">3. Select Season</h3>
-            <div className="button-grid">
-              {seasons.map(season => (
-                <button
-                  key={season}
-                  className={`filter-button ${selectedSeason === season ? 'selected' : ''}`}
-                  onClick={() => setSelectedSeason(season)}
-                >
-                  {season}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Results Section */}
-      {selectedState && selectedCity && selectedSeason && (
-        <div className="results-section">
-          {currentData ? (
-            <>
-              <div className="destination-header">
-                <h2 className="destination-title">
-                  {selectedCity}, {selectedState} in {selectedSeason}
-                </h2>
-                <p className="destination-desc">{currentData.description}</p>
-              </div>
-
-              <div className="cards-grid">
-                {/* Festivals Card */}
-                <div className="card">
-                  <div className="card-header">
-                    <h3 className="card-title">🎉 Festivals</h3>
-                    <button
-                      className="like-button"
-                      onClick={() => handleLike('festivals')}
-                    >
-                      ❤️ {likes[`${selectedState}-${selectedCity}-${selectedSeason}-festivals`] || 0}
-                    </button>
-                  </div>
-                  <div className="card-content">
-                    {currentData.festivals.map((festival, index) => (
-                      <span key={index} className="tag">{festival}</span>
-                    ))}
+      {/* Popular Destinations */}
+      <div className="destinations-section">
+        <h2 className="section-title">🌟 Popular Destinations to Explore</h2>
+        <div className="destinations-grid">
+          {Object.entries(popularCities).map(([state, data]) => {
+            const cityName = Object.keys(data.cities)[0];
+            const seasonKey = Object.keys(data.cities[cityName])[0];
+            
+            return (
+              <div key={state} className="destination-card">
+                <div className="destination-image">
+                  <img src={data.image} alt={cityName} />
+                  <div className="image-overlay">
+                    <span className="destination-name">{cityName}</span>
+                    <span className="destination-state">{state}</span>
                   </div>
                 </div>
-
-                {/* Food Card */}
-                <div className="card">
-                  <div className="card-header">
-                    <h3 className="card-title">🍽️ Local Cuisine</h3>
-                    <button
-                      className="like-button"
-                      onClick={() => handleLike('food')}
-                    >
-                      ❤️ {likes[`${selectedState}-${selectedCity}-${selectedSeason}-food`] || 0}
-                    </button>
-                  </div>
-                  <div className="card-content">
-                    {currentData.food.map((item, index) => (
-                      <span key={index} className="tag">{item}</span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Monuments Card */}
-                <div className="card">
-                  <div className="card-header">
-                    <h3 className="card-title">🏛️ Must Visit</h3>
-                    <button
-                      className="like-button"
-                      onClick={() => handleLike('monuments')}
-                    >
-                      ❤️ {likes[`${selectedState}-${selectedCity}-${selectedSeason}-monuments`] || 0}
-                    </button>
-                  </div>
-                  <div className="card-content">
-                    {currentData.monuments.map((monument, index) => (
-                      <span key={index} className="tag">{monument}</span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Lifestyle Card */}
-                <div className="card full-width-card">
-                  <div className="card-header">
-                    <h3 className="card-title">🌟 Culture & Lifestyle</h3>
-                    <button
-                      className="like-button"
-                      onClick={() => handleLike('lifestyle')}
-                    >
-                      ❤️ {likes[`${selectedState}-${selectedCity}-${selectedSeason}-lifestyle`] || 0}
-                    </button>
-                  </div>
-                  <div className="card-content">
-                    <p className="lifestyle-text">{currentData.lifestyle}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Comments Section */}
-              <div className="comments-section">
-                <h3 className="comments-title">💬 Travel Tips & Comments</h3>
                 
-                <div className="comment-form">
-                  <textarea
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    placeholder={`Share your experience or tips for ${selectedCity} in ${selectedSeason}...`}
-                    className="comment-input"
-                    rows="4"
-                  />
-                  <button onClick={handleCommentSubmit} className="submit-button">
-                    Post Comment
+                <div className="destination-info">
+                  <div className="destination-details">
+                    <div className="detail-item">
+                      <span className="detail-icon">🕐</span>
+                      <div>
+                        <strong>Best Time:</strong>
+                        <span>{data.bestTime}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="detail-item">
+                      <span className="detail-icon">✨</span>
+                      <div>
+                        <strong>Highlight:</strong>
+                        <span>{data.highlight}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <button 
+                    className="explore-button"
+                    onClick={() => onExplorePlace(state, cityName, seasonKey)}
+                  >
+                    <span>Explore {cityName}</span>
+                    <span className="button-arrow">→</span>
                   </button>
                 </div>
-
-                <div className="comments-list">
-                  {comments
-                    .filter(comment => 
-                      comment.destination === `${selectedCity}, ${selectedState}` && 
-                      comment.season === selectedSeason
-                    )
-                    .map(comment => (
-                      <div key={comment.id} className="comment-item">
-                        <div className="comment-header">
-                          <span className="comment-dest">{comment.destination} - {comment.season}</span>
-                          <span className="comment-time">{comment.timestamp}</span>
-                        </div>
-                        <p className="comment-text">{comment.text}</p>
-                      </div>
-                    ))}
-                  
-                  {comments.filter(comment => 
-                    comment.destination === `${selectedCity}, ${selectedState}` && 
-                    comment.season === selectedSeason
-                  ).length === 0 && (
-                    <p className="no-comments">
-                      Be the first to share your experience of {selectedCity} in {selectedSeason}!
-                    </p>
-                  )}
-                </div>
               </div>
-            </>
-          ) : (
-            <div className="no-data-message">
-              <h3 className="no-data-title">No seasonal data available</h3>
-              <p>
-                In {selectedCity}, {selectedState} during {selectedSeason}, there are no season-specific festivals or detailed cultural information available.
-              </p>
-              <p className="suggestion">
-                Try visiting in <strong>Winter</strong> or <strong>Monsoon</strong> for the best cultural experiences!
-              </p>
-            </div>
-          )}
+            );
+          })}
         </div>
-      )}
+      </div>
 
-      {!selectedState && (
-        <div className="welcome-section">
-          <div className="welcome-card">
-            <h2>🌟 Welcome to Culturist</h2>
-            <p>Discover the perfect time to explore India's rich cultural heritage. Select a state above to begin your journey through festivals, food, monuments, and local lifestyles.</p>
-            <div className="features">
-              <div className="feature">
-                <span>🎭</span>
-                <span>Season-specific festivals</span>
-              </div>
-              <div className="feature">
-                <span>🍛</span>
-                <span>Local cuisine recommendations</span>
-              </div>
-              <div className="feature">
-                <span>🏛️</span>
-                <span>Must-visit monuments</span>
-              </div>
-              <div className="feature">
-                <span>🏞️</span>
-                <span>Cultural insights & lifestyle</span>
-              </div>
-            </div>
+      {/* Features Section */}
+      <div className="features-section">
+        <h2 className="section-title">🎯 What Makes Each Destination Special</h2>
+        <div className="features-grid">
+          <div className="feature-card">
+            <div className="feature-icon">🎭</div>
+            <h3>Seasonal Festivals</h3>
+            <p>Experience authentic local festivals and cultural celebrations unique to each season and region.</p>
+          </div>
+          
+          <div className="feature-card">
+            <div className="feature-icon">🍛</div>
+            <h3>Regional Cuisine</h3>
+            <p>Discover mouth-watering local delicacies and traditional recipes passed down through generations.</p>
+          </div>
+          
+          <div className="feature-card">
+            <div className="feature-icon">🏛️</div>
+            <h3>Heritage Sites</h3>
+            <p>Explore magnificent monuments, ancient temples, and UNESCO World Heritage sites.</p>
+          </div>
+          
+          <div className="feature-card">
+            <div className="feature-icon">🌈</div>
+            <h3>Local Culture</h3>
+            <p>Immerse yourself in diverse lifestyles, traditions, and the warm hospitality of local communities.</p>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };
-
-export default Culturist;
+export { popularCities };
+export default LandingPage;
